@@ -50,60 +50,71 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return children;
 }
 
-const App = () => (
-  <ThemeProvider defaultTheme="light">
-    <QueryClientProvider client={queryClient}>
-      <UserProvider>
-        <ActivityProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter basename="/">
-              <Routes>
-                {/* Public Routes */}
-                <Route index element={<HomePage />} />
-                <Route path="/" element={<HomePage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/activities" element={<ActivitiesPage />} />
-                <Route path="/contact" element={<ContactPage />} />
-                <Route path="/auth" element={<AuthPage />} />
+const App = () => {
+  // Create a protected route element with the given component
+  const createProtectedRoute = (Component: React.ComponentType) => {
+    return React.createElement(
+      ProtectedRoute,
+      null,
+      React.createElement(Component, null)
+    );
+  };
 
-                {/* Protected Admin Routes */}
-                <Route path="/admin" element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/activities" element={
-                  <ProtectedRoute>
-                    <Activities />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/add-activity" element={
-                  <ProtectedRoute>
-                    <AddActivity />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/profile" element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/settings" element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } />
+  // Create a route element
+  const createRoute = (path: string, element: React.ReactNode, props?: any) => {
+    return React.createElement(
+      Route,
+      { path, element, ...props }
+    );
+  };
 
-                {/* Not Found Route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </ActivityProvider>
-      </UserProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
-);
+  return React.createElement(
+    ThemeProvider,
+    { defaultTheme: "light" },
+    React.createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      React.createElement(
+        UserProvider,
+        null,
+        React.createElement(
+          ActivityProvider,
+          null,
+          React.createElement(
+            TooltipProvider,
+            null,
+            React.createElement(Toaster, null),
+            React.createElement(Sonner, null),
+            React.createElement(
+              BrowserRouter,
+              { basename: "/" },
+              React.createElement(
+                Routes,
+                null,
+                // Public Routes
+                React.createElement(Route, { index: true, element: React.createElement(HomePage, null) }),
+                React.createElement(Route, { path: "/", element: React.createElement(HomePage, null) }),
+                React.createElement(Route, { path: "/about", element: React.createElement(AboutPage, null) }),
+                React.createElement(Route, { path: "/activities", element: React.createElement(ActivitiesPage, null) }),
+                React.createElement(Route, { path: "/contact", element: React.createElement(ContactPage, null) }),
+                React.createElement(Route, { path: "/auth", element: React.createElement(AuthPage, null) }),
+
+                // Protected Admin Routes
+                createRoute("/admin", createProtectedRoute(AdminDashboard)),
+                createRoute("/admin/activities", createProtectedRoute(Activities)),
+                createRoute("/admin/add-activity", createProtectedRoute(AddActivity)),
+                createRoute("/admin/profile", createProtectedRoute(Profile)),
+                createRoute("/admin/settings", createProtectedRoute(Settings)),
+
+                // Not Found Route
+                React.createElement(Route, { path: "*", element: React.createElement(NotFound, null) })
+              )
+            )
+          )
+        )
+      )
+    )
+  );
+};
 
 export default App;
