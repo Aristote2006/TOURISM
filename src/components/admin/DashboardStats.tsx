@@ -4,15 +4,42 @@ import { MapPin, Hotel, Utensils, Home, Mountain } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useActivities } from '@/contexts/ActivityContext';
 
-// Define icon types
-type IconType = 'mapPin' | 'hotel' | 'utensils' | 'home' | 'mountain';
+// Define the stat interface
+interface StatItem {
+  title: string;
+  value: string;
+  iconName: string;
+  change: string;
+  positive: boolean;
+  color: string;
+  bgClass: string;
+  path: string;
+}
 
-// Define stats data without JSX
-const statsData = [
+// Component for rendering icons
+const IconComponent = ({ name, className }: { name: string; className: string }) => {
+  switch (name) {
+    case 'mapPin':
+      return React.createElement(MapPin, { className });
+    case 'hotel':
+      return React.createElement(Hotel, { className });
+    case 'utensils':
+      return React.createElement(Utensils, { className });
+    case 'home':
+      return React.createElement(Home, { className });
+    case 'mountain':
+      return React.createElement(Mountain, { className });
+    default:
+      return null;
+  }
+};
+
+// Define stats data
+const statsData: StatItem[] = [
   {
     title: "Total Activities",
     value: "793",
-    iconType: 'mapPin' as IconType,
+    iconName: 'mapPin',
     change: "+12% from last month",
     positive: true,
     color: "var(--color-activities)",
@@ -22,7 +49,7 @@ const statsData = [
   {
     title: "Hotels & Resorts",
     value: "245",
-    iconType: 'hotel' as IconType,
+    iconName: 'hotel',
     change: "+5% from last month",
     positive: true,
     color: "var(--color-hotels)",
@@ -32,7 +59,7 @@ const statsData = [
   {
     title: "Restaurants",
     value: "187",
-    iconType: 'utensils' as IconType,
+    iconName: 'utensils',
     change: "+8% from last month",
     positive: true,
     color: "var(--color-restaurants)",
@@ -42,7 +69,7 @@ const statsData = [
   {
     title: "Lodges",
     value: "92",
-    iconType: 'home' as IconType,
+    iconName: 'home',
     change: "-3% from last month",
     positive: false,
     color: "var(--color-lodges)",
@@ -52,7 +79,7 @@ const statsData = [
   {
     title: "Adventures",
     value: "156",
-    iconType: 'mountain' as IconType,
+    iconName: 'mountain',
     change: "+15% from last month",
     positive: true,
     color: "var(--color-adventures)",
@@ -61,36 +88,12 @@ const statsData = [
   },
 ];
 
-// Function to render the appropriate icon
-const renderIcon = (iconType: IconType) => {
-  switch (iconType) {
-    case 'mapPin':
-      return <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
-    case 'hotel':
-      return <Hotel className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
-    case 'utensils':
-      return <Utensils className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
-    case 'home':
-      return <Home className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
-    case 'mountain':
-      return <Mountain className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
-    default:
-      return null;
-  }
-};
-
-// Create stats with icons
-const stats = statsData.map(stat => ({
-  ...stat,
-  icon: renderIcon(stat.iconType)
-}));
-
 const DashboardStats = () => {
   const navigate = useNavigate();
   const { activities } = useActivities();
   const [animatedStats, setAnimatedStats] = useState<{ [key: string]: number }>({});
   const [isVisible, setIsVisible] = useState(false);
-  const [realStats, setRealStats] = useState<typeof stats>([]);
+  const [realStats, setRealStats] = useState<StatItem[]>([]);
 
   useEffect(() => {
     // Calculate real stats based on activities
@@ -102,31 +105,31 @@ const DashboardStats = () => {
 
     const updatedStats = [
       {
-        ...stats[0],
+        ...statsData[0],
         value: totalActivities.toString(),
         change: totalActivities > 0 ? "New activities added" : "No activities yet",
         positive: totalActivities > 0
       },
       {
-        ...stats[1],
+        ...statsData[1],
         value: hotelCount.toString(),
         change: hotelCount > 0 ? `${hotelCount} hotels & resorts` : "No hotels yet",
         positive: hotelCount > 0
       },
       {
-        ...stats[2],
+        ...statsData[2],
         value: restaurantCount.toString(),
         change: restaurantCount > 0 ? `${restaurantCount} restaurants` : "No restaurants yet",
         positive: restaurantCount > 0
       },
       {
-        ...stats[3],
+        ...statsData[3],
         value: lodgeCount.toString(),
         change: lodgeCount > 0 ? `${lodgeCount} lodges` : "No lodges yet",
         positive: lodgeCount > 0
       },
       {
-        ...stats[4],
+        ...statsData[4],
         value: adventureCount.toString(),
         change: adventureCount > 0 ? `${adventureCount} adventures` : "No adventures yet",
         positive: adventureCount > 0
@@ -175,61 +178,45 @@ const DashboardStats = () => {
     return () => clearInterval(interval);
   }, [activities]);
 
+  // Render a stat card
+  const renderStatCard = (stat: StatItem, index: number) => {
+    return (
+      <div
+        key={index}
+        className={`stat-card overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer ${
+          isVisible ? 'animate-fade-in' : 'opacity-0'
+        }`}
+        style={{ animationDelay: `${index * 100}ms` }}
+        onClick={() => navigate(stat.path)}
+      >
+        <div className="flex flex-col h-full">
+          <div className={`${stat.bgClass} p-2 sm:p-3 text-white`}>
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-medium truncate">{stat.title}</p>
+              <div className="rounded-full p-1.5 bg-white/20 animate-pulse">
+                <IconComponent name={stat.iconName} className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between bg-white dark:bg-gray-800">
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold transition-all duration-300">
+              {animatedStats[stat.title] || 0}
+            </h3>
+            <p className={`text-xs sm:text-sm mt-2 ${stat.positive ? 'text-green-600' : 'text-red-600'} font-medium`}>
+              {stat.change}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-      {realStats.length > 0 ? realStats.map((stat, index) => (
-        <div
-          key={index}
-          className={`stat-card overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer ${
-            isVisible ? 'animate-fade-in' : 'opacity-0'
-          }`}
-          style={{ animationDelay: `${index * 100}ms` }}
-          onClick={() => navigate(stat.path)}
-        >
-          <div className="flex flex-col h-full">
-            <div className={`${stat.bgClass} p-2 sm:p-3 text-white`}>
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-medium truncate">{stat.title}</p>
-                <div className="rounded-full p-1.5 bg-white/20 animate-pulse">{stat.icon}</div>
-              </div>
-            </div>
-            <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between bg-white dark:bg-gray-800">
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold transition-all duration-300">
-                {animatedStats[stat.title] || 0}
-              </h3>
-              <p className={`text-xs sm:text-sm mt-2 ${stat.positive ? 'text-green-600' : 'text-red-600'} font-medium`}>
-                {stat.change}
-              </p>
-            </div>
-          </div>
-        </div>
-      )) : stats.map((stat, index) => (
-        <div
-          key={index}
-          className={`stat-card overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer ${
-            isVisible ? 'animate-fade-in' : 'opacity-0'
-          }`}
-          style={{ animationDelay: `${index * 100}ms` }}
-          onClick={() => navigate(stat.path)}
-        >
-          <div className="flex flex-col h-full">
-            <div className={`${stat.bgClass} p-2 sm:p-3 text-white`}>
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-medium truncate">{stat.title}</p>
-                <div className="rounded-full p-1.5 bg-white/20 animate-pulse">{stat.icon}</div>
-              </div>
-            </div>
-            <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between bg-white dark:bg-gray-800">
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold transition-all duration-300">
-                {animatedStats[stat.title] || 0}
-              </h3>
-              <p className={`text-xs sm:text-sm mt-2 ${stat.positive ? 'text-green-600' : 'text-red-600'} font-medium`}>
-                {stat.change}
-              </p>
-            </div>
-          </div>
-        </div>
-      ))}
+      {realStats.length > 0
+        ? realStats.map((stat, index) => renderStatCard(stat, index))
+        : statsData.map((stat, index) => renderStatCard(stat, index))
+      }
     </div>
   );
 };
