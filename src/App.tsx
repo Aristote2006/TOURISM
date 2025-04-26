@@ -1,10 +1,10 @@
 
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { UserProvider } from "@/contexts/UserContext";
@@ -36,11 +36,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }, [user, updateActivity]);
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return React.createElement(
+      'div',
+      { className: "flex items-center justify-center min-h-screen" },
+      "Loading..."
+    );
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return React.createElement(Navigate, { to: "/auth", replace: true });
   }
 
   return children;

@@ -1,5 +1,9 @@
-import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import { createRoot } from 'react-dom/client';
+import React from 'react';
+import App from './App.tsx';
+import './index.css';
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Use React.createElement instead of JSX
+createRoot(document.getElementById("root")!).render(
+  React.createElement(App, null)
+);
