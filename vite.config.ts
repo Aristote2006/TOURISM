@@ -10,7 +10,10 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      jsxImportSource: 'react',
+      runtime: 'automatic'
+    }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
