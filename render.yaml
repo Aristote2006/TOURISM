@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: serene-voyage-admin-panel
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: 18.x
+      - key: NPM_VERSION
+        value: 9.x
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache

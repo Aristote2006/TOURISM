@@ -4,11 +4,15 @@ import { MapPin, Hotel, Utensils, Home, Mountain } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useActivities } from '@/contexts/ActivityContext';
 
-const stats = [
+// Define icon types
+type IconType = 'mapPin' | 'hotel' | 'utensils' | 'home' | 'mountain';
+
+// Define stats data without JSX
+const statsData = [
   {
     title: "Total Activities",
     value: "793",
-    icon: <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-white" />,
+    iconType: 'mapPin' as IconType,
     change: "+12% from last month",
     positive: true,
     color: "var(--color-activities)",
@@ -18,7 +22,7 @@ const stats = [
   {
     title: "Hotels & Resorts",
     value: "245",
-    icon: <Hotel className="h-6 w-6 sm:h-8 sm:w-8 text-white" />,
+    iconType: 'hotel' as IconType,
     change: "+5% from last month",
     positive: true,
     color: "var(--color-hotels)",
@@ -28,7 +32,7 @@ const stats = [
   {
     title: "Restaurants",
     value: "187",
-    icon: <Utensils className="h-6 w-6 sm:h-8 sm:w-8 text-white" />,
+    iconType: 'utensils' as IconType,
     change: "+8% from last month",
     positive: true,
     color: "var(--color-restaurants)",
@@ -38,7 +42,7 @@ const stats = [
   {
     title: "Lodges",
     value: "92",
-    icon: <Home className="h-6 w-6 sm:h-8 sm:w-8 text-white" />,
+    iconType: 'home' as IconType,
     change: "-3% from last month",
     positive: false,
     color: "var(--color-lodges)",
@@ -48,7 +52,7 @@ const stats = [
   {
     title: "Adventures",
     value: "156",
-    icon: <Mountain className="h-6 w-6 sm:h-8 sm:w-8 text-white" />,
+    iconType: 'mountain' as IconType,
     change: "+15% from last month",
     positive: true,
     color: "var(--color-adventures)",
@@ -56,6 +60,30 @@ const stats = [
     path: "/admin/activities"
   },
 ];
+
+// Function to render the appropriate icon
+const renderIcon = (iconType: IconType) => {
+  switch (iconType) {
+    case 'mapPin':
+      return <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
+    case 'hotel':
+      return <Hotel className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
+    case 'utensils':
+      return <Utensils className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
+    case 'home':
+      return <Home className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
+    case 'mountain':
+      return <Mountain className="h-6 w-6 sm:h-8 sm:w-8 text-white" />;
+    default:
+      return null;
+  }
+};
+
+// Create stats with icons
+const stats = statsData.map(stat => ({
+  ...stat,
+  icon: renderIcon(stat.iconType)
+}));
 
 const DashboardStats = () => {
   const navigate = useNavigate();

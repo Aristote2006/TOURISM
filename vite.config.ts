@@ -10,7 +10,11 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      // Explicitly set JSX runtime to automatic
+      jsxImportSource: 'react',
+      jsxRuntime: 'automatic'
+    }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
@@ -19,4 +23,30 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Build configuration for production
+  build: {
+    outDir: 'dist',
+    minify: 'esbuild', // Use esbuild instead of terser
+    sourcemap: false,
+    // Chunk size warnings threshold (in kBs)
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        // Ensure proper chunking
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: [
+            '@/components/ui/button',
+            '@/components/ui/card',
+            '@/components/ui/avatar',
+            '@/components/ui/form'
+          ]
+        }
+      }
+    }
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom']
+  }
 }));
