@@ -1,96 +1,166 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  getAllActivities,
+  getActivityById as getActivity,
+  createActivity,
+  updateActivity as updateActivityService,
+  deleteActivity as deleteActivityService,
+  toggleFeatured as toggleFeaturedService
+} from '@/services/activityService';
 
-// Define the Activity type
-export interface Activity {
-  id: string;
-  name: string;
-  type: string;
-  image: string;
-  description: string;
-  location: string;
-  fullAddress?: string;
-  latitude?: string | null;
-  longitude?: string | null;
-  contact?: string;
-  phone?: string;
-  featured: boolean;
-  createdAt: string;
-}
+// Import the Activity type from the service
+import { Activity } from '@/services/activityService';
 
 interface ActivityContextType {
   activities: Activity[];
-  addActivity: (activity: Omit<Activity, 'id' | 'createdAt'>) => void;
-  updateActivity: (id: string, activity: Partial<Activity>) => void;
-  deleteActivity: (id: string) => void;
-  getActivityById: (id: string) => Activity | undefined;
-  toggleFeatured: (id: string) => void;
+  loading: boolean;
+  addActivity: (activity: Omit<Activity, 'id' | 'created_at' | 'updated_at'>) => Promise<Activity | null>;
+  updateActivity: (id: string, activity: Partial<Activity>) => Promise<Activity | null>;
+  deleteActivity: (id: string) => Promise<boolean>;
+  getActivityById: (id: string) => Promise<Activity | null>;
+  toggleFeatured: (id: string) => Promise<Activity | null>;
 }
 
 const ActivityContext = createContext<ActivityContextType>({
   activities: [],
-  addActivity: () => {},
-  updateActivity: () => {},
-  deleteActivity: () => {},
-  getActivityById: () => undefined,
-  toggleFeatured: () => {},
+  loading: true,
+  addActivity: async () => null,
+  updateActivity: async () => null,
+  deleteActivity: async () => false,
+  getActivityById: async () => null,
+  toggleFeatured: async () => null,
 });
 
 export const useActivities = () => useContext(ActivityContext);
 
 export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize activities from localStorage or empty array
-  const [activities, setActivities] = useState<Activity[]>(() => {
-    const savedActivities = localStorage.getItem('activities');
-    return savedActivities ? JSON.parse(savedActivities) : [];
-  });
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Save activities to localStorage whenever they change
+  // Load activities from MongoDB
   useEffect(() => {
-    localStorage.setItem('activities', JSON.stringify(activities));
-  }, [activities]);
+    async function loadActivities() {
+      try {
+        setLoading(true);
+        const data = await getAllActivities();
+        setActivities(data);
+      } catch (error) {
+        console.error('Error loading activities:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadActivities();
+  }, []);
 
   // Add a new activity
-  const addActivity = (activity: Omit<Activity, 'id' | 'createdAt'>) => {
-    const newActivity: Activity = {
-      ...activity,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
-    setActivities((prev) => [...prev, newActivity]);
+  const addActivity = async (activity: Omit<Activity, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      setLoading(true);
+      const newActivity = await createActivity(activity);
+
+      if (newActivity) {
+        setActivities(prev => [...prev, newActivity]);
+        return newActivity;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Update an existing activity
-  const updateActivity = (id: string, updatedFields: Partial<Activity>) => {
-    setActivities((prev) =>
-      prev.map((activity) =>
-        activity.id === id ? { ...activity, ...updatedFields } : activity
-      )
-    );
+  const updateActivity = async (id: string, updatedFields: Partial<Activity>) => {
+    try {
+      setLoading(true);
+      const updatedActivity = await updateActivityService(id, updatedFields);
+
+      if (updatedActivity) {
+        setActivities(prev =>
+          prev.map(activity =>
+            activity.id === id ? updatedActivity : activity
+          )
+        );
+        return updatedActivity;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Delete an activity
-  const deleteActivity = (id: string) => {
-    setActivities((prev) => prev.filter((activity) => activity.id !== id));
+  const deleteActivity = async (id: string) => {
+    try {
+      setLoading(true);
+      const success = await deleteActivityService(id);
+
+      if (success) {
+        setActivities(prev => prev.filter(activity => activity.id !== id));
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Get activity by ID
-  const getActivityById = (id: string) => {
-    return activities.find((activity) => activity.id === id);
+  const getActivityById = async (id: string) => {
+    try {
+      // First check if it's in the local state
+      const localActivity = activities.find(activity => activity.id === id);
+      if (localActivity) return localActivity;
+
+      // If not, fetch from MongoDB
+      return await getActivity(id);
+    } catch (error) {
+      console.error('Error getting activity by ID:', error);
+      return null;
+    }
   };
 
   // Toggle featured status
-  const toggleFeatured = (id: string) => {
-    setActivities((prev) =>
-      prev.map((activity) =>
-        activity.id === id ? { ...activity, featured: !activity.featured } : activity
-      )
-    );
+  const toggleFeatured = async (id: string) => {
+    try {
+      setLoading(true);
+      const updatedActivity = await toggleFeaturedService(id);
+
+      if (updatedActivity) {
+        setActivities(prev =>
+          prev.map(activity =>
+            activity.id === id ? updatedActivity : activity
+          )
+        );
+        return updatedActivity;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error toggling featured status:', error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <ActivityContext.Provider
       value={{
         activities,
+        loading,
         addActivity,
         updateActivity,
         deleteActivity,

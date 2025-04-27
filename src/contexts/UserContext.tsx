@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { getUserProfile, updateUserProfile } from '@/services/authService';
 
 interface UserProfile {
   id: string;
@@ -17,15 +17,6 @@ interface UserContextType {
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string | null>;
 }
-
-const defaultUserProfile: UserProfile = {
-  id: '',
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone: '',
-  avatar_url: null
-};
 
 const UserContext = createContext<UserContextType>({
   userProfile: null,
@@ -50,62 +41,32 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       try {
-        // First check if profile exists
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
         // Check for stored avatar in localStorage
         const storedAvatar = localStorage.getItem('userAvatar');
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error fetching profile:', profileError);
-          throw profileError;
-        }
+        // Get user profile from MongoDB
+        const profile = await getUserProfile(user.id);
 
-        // If profile exists, use it
-        if (profileData) {
+        if (profile) {
           setUserProfile({
-            id: profileData.id,
-            first_name: profileData.first_name,
-            last_name: profileData.last_name,
-            email: user.email || '',
-            phone: profileData.phone,
+            id: profile.id,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            email: profile.email,
+            phone: profile.phone,
             // Use localStorage avatar if available, otherwise use the one from the database
-            avatar_url: storedAvatar || profileData.avatar_url
+            avatar_url: storedAvatar || profile.avatar_url
           });
         } else {
-          // If no profile, create one with user metadata
-          const userData = user.user_metadata;
-
-          const newProfile = {
+          // Fallback to basic user info
+          setUserProfile({
             id: user.id,
-            first_name: userData?.first_name || '',
-            last_name: userData?.last_name || '',
-            email: user.email || '',
-            phone: userData?.phone || '',
+            first_name: user.first_name,
+            last_name: user.last_name,
+            email: user.email,
+            phone: null,
             avatar_url: storedAvatar || null
-          };
-
-          // Insert the new profile
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert([{
-              id: user.id,
-              first_name: newProfile.first_name,
-              last_name: newProfile.last_name,
-              phone: newProfile.phone,
-              role: 'user'
-            }]);
-
-          if (insertError) {
-            console.error('Error creating profile:', insertError);
-            throw insertError;
-          }
-
-          setUserProfile(newProfile);
+          });
         }
       } catch (error) {
         console.error('Error in profile management:', error);
@@ -113,10 +74,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const storedAvatar = localStorage.getItem('userAvatar');
         setUserProfile({
           id: user.id,
-          first_name: user.user_metadata?.first_name || '',
-          last_name: user.user_metadata?.last_name || '',
-          email: user.email || '',
-          phone: user.user_metadata?.phone || '',
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone: null,
           avatar_url: storedAvatar || null
         });
       } finally {
@@ -138,20 +99,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('userAvatar', data.avatar_url);
       }
 
-      // Update the profile in Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: data.first_name,
-          last_name: data.last_name,
-          phone: data.phone,
-          // Only store the URL in Supabase, not the base64 data
-          avatar_url: data.avatar_url?.startsWith('data:image') ? 'profile-image-uploaded' : data.avatar_url,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+      // Update the profile in MongoDB
+      const success = await updateUserProfile(user.id, {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        phone: data.phone,
+        // Only store the URL in MongoDB, not the base64 data
+        avatar_url: data.avatar_url?.startsWith('data:image') ? 'profile-image-uploaded' : data.avatar_url,
+      });
 
-      if (error) throw error;
+      if (!success) throw new Error('Failed to update profile');
 
       // Update local state
       setUserProfile(prev => prev ? { ...prev, ...data } : null);

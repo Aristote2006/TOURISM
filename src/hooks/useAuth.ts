@@ -1,54 +1,91 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { loginUser, verifyToken, updateUserActivity } from '@/services/authService';
+
+interface User {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  avatar_url?: string;
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get current session
-    const getSession = async () => {
+    // Check for token in localStorage
+    const checkAuth = async () => {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      const token = localStorage.getItem('auth_token');
+
+      if (token) {
+        const decoded = verifyToken(token);
+        if (decoded) {
+          // Token is valid, set user
+          setUser({
+            id: decoded.id,
+            email: decoded.email,
+            first_name: decoded.first_name || '',
+            last_name: decoded.last_name || '',
+            role: decoded.role,
+            avatar_url: decoded.avatar_url
+          });
+        } else {
+          // Token is invalid, remove it
+          localStorage.removeItem('auth_token');
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+
       setLoading(false);
     };
 
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      setLoading(true);
+      const result = await loginUser(email, password);
 
-      if (error) throw error;
-      return { success: true };
+      if (result.success && result.token && result.user) {
+        // Save token to localStorage
+        localStorage.setItem('auth_token', result.token);
+
+        // Set user
+        setUser({
+          id: result.user.id,
+          email: result.user.email,
+          first_name: result.user.first_name,
+          last_name: result.user.last_name,
+          role: result.user.role,
+          avatar_url: result.user.avatar_url
+        });
+
+        return { success: true };
+      } else {
+        return { success: false, error: result.error };
+      }
     } catch (error) {
       console.error('Error logging in:', error);
       return { success: false, error };
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // Remove token from localStorage
+      localStorage.removeItem('auth_token');
+
+      // Clear user state
+      setUser(null);
+
       return { success: true };
     } catch (error) {
       console.error('Error logging out:', error);
@@ -59,18 +96,9 @@ export function useAuth() {
   // Update last activity timestamp
   const updateActivity = async () => {
     if (!user) return;
-    
+
     try {
-      const now = new Date().toISOString();
-      
-      await supabase
-        .from('user_activity')
-        .upsert({
-          user_id: user.id,
-          last_active: now
-        }, {
-          onConflict: 'user_id'
-        });
+      await updateUserActivity(user.id);
     } catch (error) {
       console.error('Error updating activity:', error);
     }
