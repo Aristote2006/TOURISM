@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 type AuthMode = 'login' | 'signup';
 
@@ -32,31 +31,59 @@ export function AuthForm() {
 
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              first_name: firstName,
-              last_name: lastName,
-            },
+        // Register new user with our API
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            email,
+            password,
+            first_name: firstName,
+            last_name: lastName,
+          }),
         });
-        
-        if (error) throw error;
-        
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Registration failed');
+        }
+
+        // Store the token in localStorage
+        localStorage.setItem('auth_token', data.token);
+
         toast({
           title: "Success!",
-          description: "Please check your email to confirm your account.",
+          description: "Account created successfully!",
         });
+
+        // Redirect to admin dashboard
+        navigate('/admin');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        // Login with our API
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
         });
-        
-        if (error) throw error;
-        
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Login failed');
+        }
+
+        // Store the token in localStorage
+        localStorage.setItem('auth_token', data.token);
+
+        // Redirect to admin dashboard
         navigate('/admin');
       }
     } catch (error: any) {
@@ -75,8 +102,8 @@ export function AuthForm() {
       <CardHeader>
         <CardTitle>{mode === 'login' ? 'Login' : 'Create Account'}</CardTitle>
         <CardDescription>
-          {mode === 'login' 
-            ? 'Enter your credentials to access your account' 
+          {mode === 'login'
+            ? 'Enter your credentials to access your account'
             : 'Fill in your details to create a new account'}
         </CardDescription>
       </CardHeader>

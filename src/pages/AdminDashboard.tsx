@@ -44,7 +44,7 @@ const AdminDashboard = () => {
 
   // Sort activities by creation date (newest first)
   const recentActivities = [...activities].sort((a, b) => {
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   }).slice(0, 5); // Get only the 5 most recent activities
 
   // Calculate activity data for chart
@@ -59,7 +59,7 @@ const AdminDashboard = () => {
 
     // Count activities by month
     activities.forEach(activity => {
-      const date = new Date(activity.createdAt);
+      const date = new Date(activity.created_at);
       const month = date.getMonth(); // 0-11
       monthlyData[month].count += 1;
     });
@@ -189,7 +189,7 @@ const AdminDashboard = () => {
                             <p className="text-xs text-muted-foreground truncate mb-1">{activity.location}</p>
                             <div className="flex items-center text-xs text-muted-foreground">
                               <Calendar className="h-3 w-3 mr-1" />
-                              <span>Added on {formatDate(activity.createdAt)}</span>
+                              <span>Added on {formatDate(activity.created_at)}</span>
                             </div>
                           </div>
                         </div>

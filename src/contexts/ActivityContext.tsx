@@ -41,8 +41,10 @@ export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     async function loadActivities() {
       try {
+        console.log('Loading activities...');
         setLoading(true);
         const data = await getAllActivities();
+        console.log('Activities loaded:', data);
         setActivities(data);
       } catch (error) {
         console.error('Error loading activities:', error);
@@ -101,16 +103,26 @@ export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Delete an activity
   const deleteActivity = async (id: string) => {
     try {
+      console.log('ActivityContext: Attempting to delete activity with ID:', id);
       setLoading(true);
       const success = await deleteActivityService(id);
 
+      console.log('ActivityContext: Delete activity result:', success);
+
       if (success) {
-        setActivities(prev => prev.filter(activity => activity.id !== id));
+        console.log('ActivityContext: Removing activity from state');
+        setActivities(prev => {
+          const newActivities = prev.filter(activity => activity.id !== id);
+          console.log('ActivityContext: Activities before:', prev.length, 'after:', newActivities.length);
+          return newActivities;
+        });
+      } else {
+        console.error('ActivityContext: Failed to delete activity:', id);
       }
 
       return success;
     } catch (error) {
-      console.error('Error deleting activity:', error);
+      console.error('ActivityContext: Error deleting activity:', error);
       return false;
     } finally {
       setLoading(false);

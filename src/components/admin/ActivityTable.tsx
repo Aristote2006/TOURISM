@@ -108,20 +108,58 @@ const ActivityTable = ({ initialFilterType = null }: ActivityTableProps) => {
     searchTerm ? 1 : 0
   ].reduce((a, b) => a + b, 0);
 
-  const handleDelete = (id: string) => {
-    deleteActivity(id);
-    toast({
-      title: "Activity deleted",
-      description: "The activity has been successfully deleted.",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await deleteActivity(id);
+
+      if (success) {
+        toast({
+          title: "Activity deleted",
+          description: "The activity has been successfully deleted.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete the activity. Please try again.",
+          variant: "destructive",
+        });
+        console.error("Failed to delete activity:", id);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting the activity.",
+        variant: "destructive",
+      });
+      console.error("Error deleting activity:", error);
+    }
   };
 
-  const handleToggleFeatured = (id: string) => {
-    toggleFeatured(id);
-    toast({
-      title: "Featured Status Updated",
-      description: "The activity's featured status has been updated.",
-    });
+  const handleToggleFeatured = async (id: string) => {
+    try {
+      const updatedActivity = await toggleFeatured(id);
+
+      if (updatedActivity) {
+        toast({
+          title: "Featured Status Updated",
+          description: "The activity's featured status has been updated.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update featured status. Please try again.",
+          variant: "destructive",
+        });
+        console.error("Failed to toggle featured status for activity:", id);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while updating featured status.",
+        variant: "destructive",
+      });
+      console.error("Error toggling featured status:", error);
+    }
   };
 
   const handleEdit = (id: string) => {

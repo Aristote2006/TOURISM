@@ -1,73 +1,113 @@
-# Welcome to your Lovable project
+# Tourism App
 
-## Project info
+A web application for managing tourism activities, built with React, Node.js, Express, and MongoDB.
 
-**URL**: https://lovable.dev/projects/52922a3e-9343-458f-8fcb-23ba37b49f66
+## Features
 
-## How can I edit this code?
+- User authentication and authorization
+- Admin dashboard for managing activities
+- Activity browsing and filtering
+- Responsive design for all screen sizes
+- Dark mode support
 
-There are several ways of editing your application.
+## Prerequisites
 
-**Use Lovable**
+- Node.js (v14 or higher)
+- MongoDB Atlas account or local MongoDB instance
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/52922a3e-9343-458f-8fcb-23ba37b49f66) and start prompting.
+## Environment Variables
 
-Changes made via Lovable will be committed automatically to this repo.
+Create a `.env` file in the root directory with the following variables:
 
-**Use your preferred IDE**
+```
+# MongoDB Connection
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# JWT Secret
+JWT_SECRET=your-secret-key-change-in-production
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Server Port
+PORT=5000
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Client URL (for CORS)
+CLIENT_URL=http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+For this project, use the following MongoDB connection string:
+```
+MONGODB_URI=mongodb+srv://aristote:aristote@projects.retu688.mongodb.net/TOURISM?retryWrites=true&w=majority&appName=Projects
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Installation
 
-**Use GitHub Codespaces**
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Create a `.env` file with the required environment variables
+4. Build the frontend:
+   ```
+   npm run build
+   ```
+5. Start the server:
+   ```
+   npm start
+   ```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Development
 
-## What technologies are used for this project?
+To run the application in development mode:
+
+1. Start the backend server:
+   ```
+   npm run server
+   ```
+
+2. In a separate terminal, start the frontend development server:
+   ```
+   npm run client
+   ```
+
+3. Or run both concurrently:
+   ```
+   npm run dev:full
+   ```
+
+## Technologies Used
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Frontend**:
+  - React
+  - TypeScript
+  - Vite
+  - shadcn-ui
+  - Tailwind CSS
+  - React Router
+  - React Query
 
-## How can I deploy this project?
+- **Backend**:
+  - Node.js
+  - Express
+  - MongoDB with Mongoose
+  - JWT Authentication
+  - bcrypt for password hashing
 
-Simply open [Lovable](https://lovable.dev/projects/52922a3e-9343-458f-8fcb-23ba37b49f66) and click on Share -> Publish.
+## Deployment to Render
 
-## Can I connect a custom domain to my Lovable project?
+1. Push your code to a GitHub repository
+2. Create a new Web Service on Render
+3. Connect your GitHub repository
+4. Configure the build settings:
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start`
+   - **Environment Variables:**
+     - `MONGODB_URI=mongodb+srv://aristote:aristote@projects.retu688.mongodb.net/TOURISM?retryWrites=true&w=majority&appName=Projects`
+     - `JWT_SECRET=your-secure-jwt-secret`
+     - `PORT=10000` (or any port Render assigns)
+     - `CLIENT_URL=https://your-render-app-url.onrender.com`
 
-Yes, you can!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project is licensed under the MIT License.

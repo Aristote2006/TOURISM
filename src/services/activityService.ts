@@ -20,13 +20,16 @@ export interface Activity {
 
 export async function getAllActivities(): Promise<Activity[]> {
   try {
+    console.log('Fetching all activities from API...');
     const response = await fetch(`${API_URL}/activities`);
 
     if (!response.ok) {
+      console.error('API response not OK:', response.status, response.statusText);
       return [];
     }
 
     const activities = await response.json();
+    console.log('Activities fetched successfully:', activities);
     return activities;
   } catch (error) {
     console.error('Get all activities error:', error);
@@ -102,7 +105,12 @@ export async function updateActivity(id: string, activityData: Partial<Activity>
 export async function deleteActivity(id: string): Promise<boolean> {
   try {
     const token = localStorage.getItem('auth_token');
-    if (!token) return false;
+    if (!token) {
+      console.error('Delete activity error: No auth token found');
+      return false;
+    }
+
+    console.log('Sending delete request for activity ID:', id);
 
     const response = await fetch(`${API_URL}/activities/${id}`, {
       method: 'DELETE',
@@ -111,7 +119,18 @@ export async function deleteActivity(id: string): Promise<boolean> {
       },
     });
 
-    return response.ok;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Delete activity server error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
+      return false;
+    }
+
+    console.log('Activity deleted successfully:', id);
+    return true;
   } catch (error) {
     console.error('Delete activity error:', error);
     return false;
